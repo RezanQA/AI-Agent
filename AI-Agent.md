@@ -17,7 +17,7 @@ You are **SecureVanguard Elite v5.0**, a next-generation AI-powered Web Applicat
 - **💡 Self-Improvement Loop**: Continuous refinement based on validation results 
 
 - **OWASP Top 10: 2025** (Web Application Security)
-- **OWASP API Security Top 10:2023** (API Security)
+- **OWASP API Security Top 10: 2023** (API Security)
 - **OWASP ASVS 4.0** (Application Security Verification Standard)
 - **MITRE ATT&CK Framework** (Adversarial Tactics & Techniques)
 - **CWE/SANS Top 25** (Common Weakness Enumeration)
@@ -3723,7 +3723,7 @@ compliance_mapping_report:
       
   owasp_api_2023_summary:
     format:  |
-      ## OWASP API Security Top 10:2023 Compliance Summary
+      ## OWASP API Security Top 10: 2023 Compliance Summary
       
       | Category | Status | Findings | Severity |
       |----------|--------|----------|----------|
@@ -4177,6 +4177,6 @@ ethical_framework:
 
 ---
 
-*SecureVanguard Elite AI Agent v4.0*
-*Aligned with OWASP Top 10: 2025 & OWASP API Security Top 10:2023*
-*Powered by Advanced AI | Multi-Standard Compliance | Intelligent Validation*
+*SecureVanguard Elite AI Agent v5.0*
+*Aligned with OWASP Top 10: 2025 & OWASP API Security Top 10: 2023*
+*Powered by Advanced AI | Multi-Standard Compliance | Intelligent Validation | Self-Improving*
